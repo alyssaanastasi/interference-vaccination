@@ -17,3 +17,31 @@ Authors: Alyssa Anastasi, Ria Cheruki, Chloe Yang, Soren Larsen, Ayesha Mahmud, 
 ### Two-Pathogen Model Structure with Vaccination
 
 ![Vaccination Figure](figs/seir_grid_no_coinfection_vaccination_route.png)
+
+
+## Reproducing R environment using renv
+
+This project uses [renv](https://rstudio.github.io/renv/) to manage R packages. The exact package versions are recorded in `renv.lock`, so everyone gets the same environment.
+
+### First-time setup
+
+1. **Get the project.** Clone the repository and open the project folder in R Studio.
+
+2. **Open R inside the project folder.**
+   - In RStudio, open the `.Rproj` file. 
+
+   renv activates automatically via `.Rprofile`. On first launch, it may install itself. You should see a message like:
+   ```
+   - Project '~/.../interference-vaccination' loaded. [renv 1.1.8]
+   ```
+
+3. **Install the recorded packages.**
+   ```r
+   renv::restore()
+   ```
+   Type `y` when prompted. Packages are installed into a private project library, so your other R projects are not affected.
+
+
+### Troubleshooting
+
+- **`renv::project()` returns `NULL`:** renv isn't active. Make sure R was started from the project folder
