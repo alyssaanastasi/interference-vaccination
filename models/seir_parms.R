@@ -5,7 +5,6 @@
 times <- 1:512
 pop <- 12549689 # Census Data for Illinois
 
-
 ## No Vaccination ##
 ### Initial Parameters 
 
@@ -63,3 +62,60 @@ add_vacc_parms <- function(parms, vA, vB, vAB,
 cov_flu_vacc_parms <- add_vacc_parms(cov_flu_parms, vA = 0.005, vB = 0.005, vAB = 0.002)
 cov_rsv_vacc_parms <- add_vacc_parms(cov_rsv_parms, vA = 0.005, vB = 0.005, vAB = 0.002)
 flu_rsv_vacc_parms <- add_vacc_parms(flu_rsv_parms, vA = 0.005, vB = 0.005, vAB = 0.002)
+
+
+
+### Seasonality Cubic Splines ### 
+
+#' Seasonal forcing curve from a 6-parameter cyclic cubic spline
+#' Returns cubic spline matrix for 6 seasonality parameters
+#' 
+#' @param mu_janfeb mu value for january - february
+#' @param mu_marapr mu value for march - april
+#' @param mu_mayjun mu value for may - june
+#' @param mu_julaug mu value for july - august
+#' @param mu_septoct mu value for september - october
+#' @param mu_novdec mu value for november to december 
+#' @return Dataframe with 365 rows and 2 columns: 
+#' \describe{
+#'   \item{day}{Day of year, indexed 0-364 (day 365 is recoded as 0).}
+#'   \item{Value}{The seasonal curve value for that day: the mean of the six
+#'   parameter-weighted spline basis functions.}
+#' }
+seas_matrix <- function(mu_janfeb, mu_marapr, mu_mayjun, mu_julaug, mu_septoct, mu_novdec){
+  n <- 365
+  x <- 0:(n-1)/(n-1);
+  k<- 0:6/6
+  matrix <- cSplineDes(x, k, ord = 4, derivs=0) %>%
+    as.data.frame() %>%
+    mutate(day = 1:365) %>%
+    rename(JanFeb = V1, MarApr = V2, MayJun = V3, JulAug = V4, SeptOct = V5, NovDec = V6) %>%
+    pivot_longer(JanFeb:NovDec, values_to = "Value", names_to = "Season") %>%
+    mutate(spline_scalar = case_when(
+      Season == "JanFeb" ~ mu_janfeb,
+      Season == "MarApr" ~ mu_marapr,
+      Season == "MayJun" ~ mu_mayjun,
+      Season == "JulAug" ~ mu_julaug,
+      Season == "SeptOct" ~ mu_septoct,
+      Season == "NovDec" ~ mu_novdec
+    )) %>%
+    mutate(Value = spline_scalar*Value) %>%
+    group_by(day) %>% 
+    summarise(Value = mean(Value)) %>%
+    ungroup() %>%
+    mutate(day = if_else(day == 365, 0, day))
+  return(matrix)
+}
+
+
+#' Get current seasonality parameter 
+#' 
+#' @param t timestep
+#' @param matrix seasonality matrix, as given from seasonality_matrix() function
+#' @return mu value at time t
+seas_function <- function(t, matrix){
+  matrix <- matrix %>%
+    filter(day == floor(t) %% 365)
+  mu <- matrix$Value[1]
+  return(mu)
+}
