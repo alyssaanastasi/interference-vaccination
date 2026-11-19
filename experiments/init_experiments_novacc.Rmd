@@ -13,26 +13,55 @@ library(tidyr)
 library(ggplot2)
 
 source("../models/two_seir_no_vacc.R")
+source("../models/two_seir_vacc.R")
 source("../models/seir_parms.R")
 ```
 
 # Initial Experiments with Interference at 0.05
-
+## Without Vaccination
 ```{R}
 
 # Use ode function from deSolve package
-out <- ode(y = no_vacc_init, times = times, func = seir_no_vacc, parms = cov_flu_parms)
+out_no_vacc <- ode(y = no_vacc_init, times = times, func = seir_no_vacc, parms = cov_flu_parms)
 
-plot(out)
+plot(out_no_vacc)
 ```
 
 
 ```{R}
-df <- as.data.frame(out)
+df <- as.data.frame(out_no_vacc)
 
 # Combine A and B
 df$A <- df$IS + df$IR
 df$B <- df$SI + df$RI
+
+df_long <- pivot_longer(df, cols = c(A, B),
+                        names_to = "compartment", values_to = "count")
+
+ggplot(df_long, aes(x = time, y = count, color = compartment)) +
+  geom_line(linewidth = 1) +
+  labs(x = "Time (days)", y = "Number of people", color = "Compartment") +
+  theme_minimal()
+
+```
+
+
+## With Vaccination
+```{R}
+
+# Use ode function from deSolve package
+out_vacc <- ode(y = vacc_init, times = times, func = seir_vacc, parms = cov_flu_vacc_parms)
+
+plot(out_vacc)
+```
+
+
+```{R}
+df <- as.data.frame(out_vacc)
+
+# Combine A and B
+df$A <- df$IS + df$IR + df$IV
+df$B <- df$SI + df$RI + df$VI
 
 df_long <- pivot_longer(df, cols = c(A, B),
                         names_to = "compartment", values_to = "count")

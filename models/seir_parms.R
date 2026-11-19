@@ -41,3 +41,25 @@ flu_rsv_parms <- c(beta_A=0.36, epsilon_A = 1/3, gamma_A = 1/7,
 
 
 ## with Vaccination ##
+### Initial Conditions
+
+vacc_names_var <- c(no_vacc_names_var,
+                    "VS", "VE", "VI", "VR",
+                    "SV", "EV", "IV", "RV",
+                    "VV")
+
+vacc_init <- rep(0, length(vacc_names_var))
+names(vacc_init) <- vacc_names_var
+vacc_init[no_vacc_names_var] <- no_vacc_init
+
+add_vacc_parms <- function(parms, vA, vB, vAB,
+                           beta_VA = parms[["beta_A"]],
+                           beta_VB = parms[["beta_B"]]) {
+  c(parms,
+    vA = vA, vB = vB, vAB = vAB,
+    beta_VA = beta_VA, beta_VB = beta_VB)
+}
+
+cov_flu_vacc_parms <- add_vacc_parms(cov_flu_parms, vA = 0.005, vB = 0.005, vAB = 0.002)
+cov_rsv_vacc_parms <- add_vacc_parms(cov_rsv_parms, vA = 0.005, vB = 0.005, vAB = 0.002)
+flu_rsv_vacc_parms <- add_vacc_parms(flu_rsv_parms, vA = 0.005, vB = 0.005, vAB = 0.002)
